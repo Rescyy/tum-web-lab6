@@ -1,0 +1,427 @@
+{
+    "swagger": "2.0",
+    "info": {
+      "description": "API documentation for Flask API",
+      "version": "1.0.0",
+      "title": "Flask API"
+    },
+    "host": "localhost:5000",
+    "basePath": "/",
+    "tags": [
+      {
+        "name": "auth",
+        "description": "Authentication operations"
+      },
+      {
+        "name": "wallets",
+        "description": "Operations related to wallets"
+      },
+      {
+        "name": "transactions",
+        "description": "Operations related to wallet transactions"
+      }
+    ],
+    "paths": {
+      "/api/token": {
+        "post": {
+          "tags": ["auth"],
+          "summary": "Create JWT Token",
+          "description": "Create a new JWT token",
+          "operationId": "createToken",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "User credentials and permissions",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "permissions": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["username"]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "JWT Token",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "access_token": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/api/wallets/{wallet_id}": {
+        "get": {
+          "tags": ["wallets"],
+          "summary": "Get Wallet by ID",
+          "description": "Get a specific wallet by ID",
+          "operationId": "getWallet",
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "name": "wallet_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID of the wallet to retrieve"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Wallet retrieved",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "currency": { "type": "string" },
+                  "description": { "type": "string" },
+                  "walletTransactions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "nr": { "type": "integer" },
+                        "date": { "type": "string" },
+                        "reason": { "type": "string" },
+                        "amount": { "type": "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "403": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Wallet not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        },
+        "post": {
+            "tags": ["wallets"],
+            "summary": "Create a new Wallet",
+            "description": "Create a new wallet with optional transactions",
+            "operationId": "createWallet",
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+              {
+                "name": "wallet_id",
+                "in": "path",
+                "required": true,
+                "type": "string",
+                "description": "ID of the wallet to retrieve"
+              },
+              {
+                "in": "body",
+                "name": "body",
+                "description": "Wallet object that needs to be added",
+                "required": true,
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": { "type": "string" },
+                    "currency": { "type": "string" },
+                    "description": { "type": "string" }
+                  },
+                  "required": ["name", "currency"]
+                }
+              }
+            ],
+            "responses": {
+              "201": {
+                "description": "Wallet created"
+              },
+              "400": {
+                "description": "Invalid input"
+              },
+              "403": {
+                "description": "Permission denied"
+              }
+            },
+            "security": [
+              {
+                "bearerAuth": []
+              }
+            ]
+          },
+        "put": {
+          "tags": ["wallets"],
+          "summary": "Update Wallet",
+          "description": "Update a wallet by ID",
+          "operationId": "updateWallet",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "name": "wallet_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID of the wallet to update"
+            },
+            {
+              "in": "body",
+              "name": "body",
+              "description": "Updated wallet object",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "currency": { "type": "string" },
+                  "description": { "type": "string" }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Wallet updated"
+            },
+            "403": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Wallet not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        },
+        "delete": {
+          "tags": ["wallets"],
+          "summary": "Delete Wallet",
+          "description": "Delete a wallet by ID",
+          "operationId": "deleteWallet",
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "name": "wallet_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID of the wallet to delete"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Wallet deleted"
+            },
+            "403": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Wallet not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      },
+      "/api/wallets/{wallet_id}/transactions/{transaction_id}": {
+        "post": {
+            "tags": ["transactions"],
+            "summary": "Post Wallet Transaction",
+            "description": "Post a transaction by wallet ID and transaction ID",
+            "operationId": "postTransaction",
+            "consumes": ["application/json"],
+            "produces": ["application/json"],
+            "parameters": [
+                {
+                    "name": "wallet_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "string",
+                    "description": "ID of the wallet"
+                  },
+                  {
+                    "name": "transaction_id",
+                    "in": "path",
+                    "required": true,
+                    "type": "string",
+                    "description": "Transaction number"
+                  },
+                  {
+                    "in": "body",
+                    "name": "body",
+                    "description": "Transaction Object",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                          "date": { "type": "string" },
+                          "reason": { "type": "string" },
+                          "amount": { "type": "integer" }
+                        }
+                      }
+                  }
+            ]
+        },
+        "put": {
+          "tags": ["transactions"],
+          "summary": "Update Wallet Transaction",
+          "description": "Update a transaction by wallet ID and transaction ID",
+          "operationId": "updateTransaction",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "name": "wallet_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID of the wallet"
+            },
+            {
+              "name": "transaction_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Transaction number"
+            },
+            {
+              "in": "body",
+              "name": "body",
+              "description": "Updated transaction object",
+              "required": true,
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "date": { "type": "string" },
+                  "reason": { "type": "string" },
+                  "amount": { "type": "integer" }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Transaction updated"
+            },
+            "403": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Transaction not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        },
+        "delete": {
+          "tags": ["transactions"],
+          "summary": "Delete Wallet Transaction",
+          "description": "Delete a transaction by wallet ID and transaction ID",
+          "operationId": "deleteTransaction",
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "name": "wallet_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "ID of the wallet"
+            },
+            {
+              "name": "transaction_id",
+              "in": "path",
+              "required": true,
+              "type": "string",
+              "description": "Transaction number"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Transaction deleted"
+            },
+            "403": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Transaction not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      }
+    },
+    "definitions": {
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "currency": { "type": "string" },
+          "description": { "type": "string" },
+          "walletTransactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "nr": { "type": "integer" },
+                "date": { "type": "string" },
+                "reason": { "type": "string" },
+                "amount": { "type": "integer" },
+                "wallet_id": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "WalletTransaction": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string" },
+          "reason": { "type": "string" },
+          "amount": { "type": "integer" },
+          "wallet_id": { "type": "string" }
+        }
+      }
+    },
+    "securityDefinitions": {
+      "bearerAuth": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header"
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  }
+  
