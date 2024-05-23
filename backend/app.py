@@ -24,7 +24,7 @@ class WalletTransaction(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     date = db.Column(db.String(24), nullable=False)
     reason = db.Column(db.String(100), nullable=True)
-    amount = db.Column(db.Integer, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
     wallet_id = db.Column(db.String(36), db.ForeignKey('wallet.id'), nullable=False)
     
     wallet = db.relationship('Wallet', back_populates='transactions')
@@ -45,7 +45,7 @@ def create_token():
     data = request.get_json()
     permissions = data.get('permissions', [])
     access_token = create_access_token(identity=data['username'], additional_claims={"permissions": permissions})
-    return jsonify(access_token=access_token)
+    return jsonify(access_token=access_token), 200
 
 @app.route('/api/wallets/<string:wallet_id>', methods=['GET', 'POST'])
 @jwt_required()
@@ -53,7 +53,7 @@ def manage_wallets(wallet_id):
     claims = get_jwt()
     if request.method == 'GET':
         if "READ" not in claims['permissions']:
-            return jsonify(msg="Permission denied"), 403
+            return jsonify(msg="Permission denied"), 401
         
         if wallet_id == "all":
             wallets = Wallet.query.all()
@@ -79,12 +79,12 @@ def manage_wallets(wallet_id):
                     "reason": t.reason,
                     "amount": t.amount #give me the format for this "5/21/2024, 5:46:53 PM"
                     } for t in wallet.transactions], key=lambda x: datetime.strptime(x['date'], '%m/%d/%Y, %I:%M:%S %p'))
-            })
+            }), 200
         
     elif request.method == 'POST':
         
         if "WRITE" not in claims['permissions']:
-            return jsonify(msg="Permission denied"), 403
+            return jsonify(msg="Permission denied"), 401
         
         data = request.get_json()
         try:
@@ -95,20 +95,49 @@ def manage_wallets(wallet_id):
                 description=data.get("description")
             ))
             db.session.commit()
-        except Exception as e:
-            print(e)
-            return jsonify(msg="Wallet creation failed"), 404
+        except Exception:
+            return jsonify(msg="Wallet creation failed"), 400
         return jsonify(msg="Wallet created"), 201
+
+@app.route('/api/wallets/query', methods=['GET'])
+@jwt_required()
+def query_wallets():
+    
+    claims = get_jwt()
+    if "READ" not in claims['permissions']:
+        return jsonify(msg="Permission denied"), 401
+    
+    args = request.args
+    limit = args.get('limit', 8)
+    offset = args.get('offset', 0)
+    fields = args.get('fields', "id,name").split(',')
+    
+    walletList = Wallet.query.all()
+    amount = len(walletList)
+    
+    if offset > amount:
+        return jsonify(msg="Query offset too large"), 404
+    
+    if offset + limit > amount:
+        walletList = walletList[offset:]
+    else:
+        walletList = walletList[offset:offset+limit]
+    
+    try:
+        response = [{key:wallet.__getattribute__(key) for key in fields} for wallet in walletList]
+    except AttributeError:
+        return jsonify(msg="Invalid field for the wallet query"), 404
+    
+    return jsonify(response), 200
 
 @app.route('/api/wallets/<string:wallet_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def modify_wallet(wallet_id):
-    print(wallet_id)
     claims = get_jwt()
     wallet = Wallet.query.get_or_404(wallet_id)
     
     if "WRITE" not in claims['permissions']:
-        return jsonify(msg="Permission denied"), 403
+        return jsonify(msg="Permission denied"), 401
     
     if request.method == 'PUT':
         data = request.get_json()
@@ -132,7 +161,7 @@ def modify_transaction(wallet_id, transaction_id):
     claims = get_jwt()
     
     if "WRITE" not in claims['permissions']:
-        return jsonify(msg="Permission denied"), 403
+        return jsonify(msg="Permission denied"), 401
     
     if request.method == 'POST':
         Wallet.query.get_or_404(wallet_id)
@@ -142,12 +171,12 @@ def modify_transaction(wallet_id, transaction_id):
             date = data["date"]
             try:
                 datetime.strptime(date, "%m/%d/%Y, %I:%M:%S %p")
-            except ValueError as e:
-                return jsonify(msg="Invalid date time format, expected format '1/25/2024, 6:45:00 PM'"), 404
+            except ValueError:
+                return jsonify(msg="Invalid date time format, expected format like '1/25/2024, 6:45:00 PM'"), 400
             db.session.add(WalletTransaction(id=transaction_id, date=date, reason=data.get("reason"), amount=data["amount"], wallet_id=wallet_id))
             db.session.commit()
-        except Exception as e:
-            return jsonify(msg="Transaction creation failed"), 404
+        except Exception:
+            return jsonify(msg="Transaction creation failed"), 400
         return jsonify(msg="Transaction created"), 200
         
     

@@ -1,9 +1,9 @@
 {
     "swagger": "2.0",
     "info": {
-      "description": "API documentation for Flask API",
+      "description": "API documentation for Wallet API",
       "version": "1.0.0",
-      "title": "Flask API"
+      "title": "Wallet API"
     },
     "host": "localhost:5000",
     "basePath": "/",
@@ -62,6 +62,80 @@
           }
         }
       },
+      "/api/wallets/query": {
+        "get": {
+          "tags": ["wallets"],
+          "summary": "Get Wallet by Query",
+          "description": "Get Multiple Wallets and Wallet Fields by Query Parameters",
+          "operationId": "getWalletQuery",
+          "parameters": [
+            {
+              "name": "limit",
+              "in": "query",
+              "required": false,
+              "type": "integer",
+              "description": "Introduce the maximum amount of wallets for return"
+            },
+            {
+              "name": "offset",
+              "in": "query",
+              "required": false,
+              "type": "integer",
+              "description": "Introduce the offset from the start of wallet list"
+            },
+            {
+              "name": "fields",
+              "in": "query",
+              "required": false,
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Introduce the fields wanted to be return. (id, name, currency, description, walletTransactiions)"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Wallet retrieved",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "currency": { "type": "string" },
+                    "description": { "type": "string" },
+                    "walletTransactions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string" },
+                          "date": { "type": "string" },
+                          "reason": { "type": "string" },
+                          "amount": { "type": "number" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Permission denied"
+            },
+            "404": {
+              "description": "Wallet or wallet fields not found"
+            }
+          },
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      },
       "/api/wallets/{wallet_id}": {
         "get": {
           "tags": ["wallets"],
@@ -93,17 +167,17 @@
                     "items": {
                       "type": "object",
                       "properties": {
-                        "nr": { "type": "integer" },
+                        "id": { "type": "string" },
                         "date": { "type": "string" },
                         "reason": { "type": "string" },
-                        "amount": { "type": "integer" }
+                        "amount": { "type": "number" }
                       }
                     }
                   }
                 }
               }
             },
-            "403": {
+            "401": {
               "description": "Permission denied"
             },
             "404": {
@@ -154,7 +228,7 @@
               "400": {
                 "description": "Invalid input"
               },
-              "403": {
+              "401": {
                 "description": "Permission denied"
               }
             },
@@ -198,7 +272,7 @@
             "200": {
               "description": "Wallet updated"
             },
-            "403": {
+            "401": {
               "description": "Permission denied"
             },
             "404": {
@@ -230,7 +304,7 @@
             "200": {
               "description": "Wallet deleted"
             },
-            "403": {
+            "401": {
               "description": "Permission denied"
             },
             "404": {
@@ -275,12 +349,32 @@
                     "schema": {
                         "type": "object",
                         "properties": {
+                          "id": { "type": "string" },
                           "date": { "type": "string" },
                           "reason": { "type": "string" },
-                          "amount": { "type": "integer" }
+                          "amount": { "type": "number" }
                         }
                       }
                   }
+            ],
+            "responses": {
+              "201": {
+                "description": "Transaction created"
+              },
+              "400": {
+                "description": "Bad Request. Wrong Syntax"
+              },
+              "401": {
+                "description": "Permission denied"
+              },
+              "404": {
+                "description": "Wallet not found"
+              }
+            },
+            "security": [
+              {
+                "bearerAuth": []
+              }
             ]
         },
         "put": {
@@ -313,9 +407,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "id": { "type": "string" },
                   "date": { "type": "string" },
                   "reason": { "type": "string" },
-                  "amount": { "type": "integer" }
+                  "amount": { "type": "number" }
                 }
               }
             }
@@ -324,7 +419,7 @@
             "200": {
               "description": "Transaction updated"
             },
-            "403": {
+            "401": {
               "description": "Permission denied"
             },
             "404": {
@@ -363,7 +458,7 @@
             "200": {
               "description": "Transaction deleted"
             },
-            "403": {
+            "401": {
               "description": "Permission denied"
             },
             "404": {
@@ -391,11 +486,10 @@
             "items": {
               "type": "object",
               "properties": {
-                "nr": { "type": "integer" },
+                "id": { "type": "string" },
                 "date": { "type": "string" },
                 "reason": { "type": "string" },
-                "amount": { "type": "integer" },
-                "wallet_id": { "type": "string" }
+                "amount": { "type": "number" }
               }
             }
           }
@@ -404,10 +498,10 @@
       "WalletTransaction": {
         "type": "object",
         "properties": {
+          "id": { "type": "string" },
           "date": { "type": "string" },
           "reason": { "type": "string" },
-          "amount": { "type": "integer" },
-          "wallet_id": { "type": "string" }
+          "amount": { "type": "number" }
         }
       }
     },
