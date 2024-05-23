@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid'; // To generate unique IDs
 import './AddWallet.css'; // Ensure you have this import
 import {useHistory } from 'react-router-dom';
+import axios from 'axios';
 
-const AddWallet = () => {
+const AddWallet = ({token}) => {
     const [walletName, setWalletName] = useState('');
     const [walletCurrency, setWalletCurrency] = useState("None"); 
     const [walletDescription, setWalletDescription] = useState(''); 
@@ -30,24 +31,18 @@ const AddWallet = () => {
 
         const walletId = uuidv4();
 
-        const newWallet = {
-            id: walletId,
-            name: walletName,
-            currency: walletCurrency,
-            description: walletDescription,
-            walletTransactions: [] // Assuming fields are additional customizable fields
-        };
-
-        // Get existing wallets from local storage
-        const existingWallets = JSON.parse(localStorage.getItem('wallets')) || {};
-
-        // Add the new wallet to the existing wallets
-        existingWallets[walletId] = newWallet;
-
-        // Save the updated wallets object back to local storage
-        localStorage.setItem('wallets', JSON.stringify(existingWallets));
-
-        history.push('/');
+        axios.post("http://localhost:5000/api/wallets/" + walletId,
+            {
+                name: walletName,
+                currency: walletCurrency,
+                description: walletDescription
+            },
+            {
+                headers: {
+                    Authorization: "Bearer " + token
+                }
+            }
+        ).then(() => {history.push('/')}).catch((error) => {console.error("Error creating wallet ", error)});
     };
 
     return (

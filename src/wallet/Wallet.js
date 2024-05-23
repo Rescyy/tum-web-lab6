@@ -4,7 +4,7 @@ import './Wallet.css';
 import threeDotsImage from '../assets/threedots.png'; // Assume you have this image in your project
 import darkThreeDotsImage from '../assets/threedots-dark.png';
 
-const Wallet = ({ wallet, darkMode, deleteHandle }) => {
+const Wallet = ({ wallet, darkMode, deleteHandle, index }) => {
     const history = useHistory();
     const [dropdownVisible, setDropdownVisible] = useState(false);
 
@@ -19,7 +19,7 @@ const Wallet = ({ wallet, darkMode, deleteHandle }) => {
 
     const handleDeleteWallet = (event) => {
         event.stopPropagation();
-        deleteHandle(wallet.id);
+        deleteHandle(wallet.id, index);
         setDropdownVisible(false);
     }
 

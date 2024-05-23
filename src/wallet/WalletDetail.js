@@ -1,17 +1,26 @@
 import React, { useState, useEffect} from 'react';
 import { useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid'; // To generate unique IDs
 import './WalletDetail.css';
+import axios from 'axios';
 
-const WalletDetail = () => {
+const WalletDetail = ({token}) => {
   const { id } = useParams();
-  const [storedWallets, setStoredWallets] = useState(null);
   const [wallet, setWallet] = useState(null);
   const [newRow, setNewRow] = useState(null);
 
   useEffect(() => {
-    const storedWallets = JSON.parse(localStorage.getItem('wallets')) || {};
-    setWallet(storedWallets[id]);
-    setStoredWallets(storedWallets);
+    axios.get("http://127.0.0.1:5000/api/wallets/" + id, {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
+    .then(response => {
+      setWallet(response.data);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
   }, [id]);
 
   if (!wallet) {
@@ -32,9 +41,21 @@ const WalletDetail = () => {
     event.preventDefault();
     newRow.amount = parseFloat(newRow.amount);
     wallet.walletTransactions.push(newRow);
-    storedWallets[id] = wallet;
-    localStorage.setItem('wallets', JSON.stringify(storedWallets));
-    setNewRow(null);
+    const transaction_id = uuidv4();
+    axios.post("http://127.0.0.1:5000/api/wallets/" + id + "/transactions/" + transaction_id,
+      {
+        date: newRow.date,
+        reason: newRow.reason,
+        amount: newRow.amount
+      },
+      {
+        headers: {
+          Authorization: 'Bearer ' + token
+        }
+      }
+    )
+    .then(() => {setNewRow(null)})
+    .catch(error => {console.error("Error posting transaction ", error)});
   };
 
   const cancelRow = () => {
@@ -59,7 +80,7 @@ const WalletDetail = () => {
       total += transaction.amount;
       transactionRows.push(
         <tr key={transaction.nr}>
-          <td>{transaction.nr}</td>
+          <td>{i+1}</td>
           <td>{transaction.reason}</td>
           <td>{transaction.date}</td>
           <td className={transaction.amount > 0 ? "green-text" : "red-text"}>{(transaction.amount > 0 ? '+' : '') +  transaction.amount}</td>

@@ -1,39 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import Wallet from './wallet/Wallet';
 import AddWallet from './wallet/AddWallet';
+import axios from 'axios';
 
-const Home = ({darkMode}) => {
+const Home = ({darkMode, token}) => {
   const [wallets, setWallets] = useState([]);
   const [renderToggle, setRenderToggle] = useState(false);
 
   useEffect(() => {
-    const storedWallets = JSON.parse(localStorage.getItem('wallets')) || [];
-    setWallets(storedWallets);
+    axios.get("http://127.0.0.1:5000/api/wallets/all", {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    })
+    .then(response => {
+      setWallets(response.data.wallets);
+    })
+    .catch(error => {
+      console.error('Error fetching data: ', error);
+    });
   }, []);
 
-  const handleDeleteWallet = (id) => {
-    delete wallets[id];
-    localStorage.setItem('wallets', JSON.stringify(wallets));
+  const handleDeleteWallet = (id, index) => {
+    console.log(wallets);
+    wallets.splice(index, 1);
+    axios.delete("http://127.0.0.1:5000/api/wallets/" + id, {
+      headers: {
+        Authorization: 'Bearer ' + token
+      }
+    });
+    console.log(wallets);
     setWallets(wallets);
     setRenderToggle(!renderToggle);
   }
 
-  const renderWallet = (wallet) => {
+  const renderWallet = (wallet, index) => {
     return (
-      <Wallet key={wallet.id} wallet={wallet} darkMode={darkMode} deleteHandle={handleDeleteWallet}/>
+      <Wallet key={wallet.id} wallet={wallet} darkMode={darkMode} deleteHandle={handleDeleteWallet} index={index}/>
     );
   };
 
 
-  const separateWallets = (wallets) => {
-
-    var walletList = [];
-
-    for (var key in wallets) {
-      walletList.push(wallets[key]);
-    }
-
-    wallets = walletList;
+  const separateWallets = () => {
 
     const walletRows = [];
     for (let i = 0; i <= wallets.length; i += 3) {
@@ -43,8 +51,7 @@ const Home = ({darkMode}) => {
       if (i + 3 > wallets.length) {
 
         for (let j = i; j < wallets.length; j++) {
-          const wallet = wallets[j];
-          walletRow.push(renderWallet(wallet, j - i))
+          walletRow.push(renderWallet(wallets[j], j))
         }
         walletRow.push(
           <AddWallet/>
@@ -54,8 +61,7 @@ const Home = ({darkMode}) => {
         )
       } else {
         for (let j = i; j < i + 3; j++) {
-          const wallet = wallets[j];
-          walletRow.push(renderWallet(wallet, j - i));
+          walletRow.push(renderWallet(wallets[j], j));
         }
       }
 
@@ -73,7 +79,7 @@ const Home = ({darkMode}) => {
     <div>
       <h1>My Wallets</h1>
       <div className="wallets">
-        {separateWallets(wallets)}
+        {separateWallets()}
       </div>
     </div>
   );

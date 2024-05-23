@@ -103,6 +103,7 @@ def manage_wallets(wallet_id):
 @app.route('/api/wallets/<string:wallet_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def modify_wallet(wallet_id):
+    print(wallet_id)
     claims = get_jwt()
     wallet = Wallet.query.get_or_404(wallet_id)
     
