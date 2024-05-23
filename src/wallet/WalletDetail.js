@@ -49,6 +49,14 @@ const WalletDetail = () => {
     });
   };
 
+  const calculateBalance = () => {
+    var total = 0;
+    for (var i = 0; i < wallet.walletTransactions.length; i++) {
+      total += wallet.walletTransactions[i].amount;
+    }
+    return total;
+  }
+
   const getCurrentRows = () => {
     
     const transactionRows = [];
@@ -76,7 +84,7 @@ const WalletDetail = () => {
     <div>
       <div>
         <h1>{wallet.name}</h1>
-        <p>Balance: {wallet.balance}</p>
+        <p>Balance: {calculateBalance()}</p>
         <p>Currency: {wallet.currency}</p>
         <p>Description: {wallet.description}</p>
         {/* Add more details as needed */}
